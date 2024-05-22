@@ -49,49 +49,62 @@ y_pred = model.predict(X_test)
 print(y_pred)
 matrix = confusion_matrix(y_test, y_pred)
 print(matrix)
-cm = confusion_matrix(y_test, y_pred)
 
 # 使用seaborn绘制热图表示混淆矩阵
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, cmap='Blues', fmt='g', xticklabels=['Predicted 0', 'Predicted 1'],
-            yticklabels=['Actual 0', 'Actual 1'])
-plt.xlabel('Predicted label')
-plt.ylabel('True label')
-plt.title('Confusion Matrix')
-plt.show()
+# cm = confusion_matrix(y_test, y_pred)
+# plt.figure(figsize=(8, 6))
+# sns.heatmap(cm, annot=True, cmap='Blues', fmt='g', xticklabels=['Predicted 0', 'Predicted 1'],
+#             yticklabels=['Actual 0', 'Actual 1'])
+# plt.xlabel('Predicted label')
+# plt.ylabel('True label')
+# plt.title('Confusion Matrix')
+# plt.show()
 
 
 print("违约类的recall:", matrix[1, 1] / (matrix[1, 1] + matrix[1, 0]))
 print("违约类的precision:", matrix[1, 1] / (matrix[1, 1] + matrix[0, 1]))
 
 # 6. shap 分析
-# 创建一个SHAP解释器
-# explainer = shap.TreeExplainer(model)
-#
-# # 计算SHAP值
-# shap_values = explainer.shap_values(X_train)
-#
-# # 可视化SHAP值
-# shap.summary_plot(shap_values, X_train, feature_names=features)
-
-# shap.initjs()
 # 确保htmls文件夹存在
-# if not os.path.exists('htmls'):
-#     os.makedirs('htmls')
+if not os.path.exists('shap'):
+    os.makedirs('shap')
+if not os.path.exists('shap/all_htmls'):
+    os.makedirs('shap/all_htmls')
+if not os.path.exists('shap/default_htmls'):
+    os.makedirs('shap/default_htmls')
+if not os.path.exists('shap/nodefault_htmls'):
+    os.makedirs('shap/nodefault_htmls')
+# 创建SHAP解释器
+explainer = shap.TreeExplainer(model)
+
+# 计算SHAP值
+shap_values = explainer.shap_values(X_train)
+
+# 可视化SHAP值
+shap.summary_plot(shap_values, X_train, feature_names=features)
+
+plt.savefig('shap/shap_summary_plot.png')
+
+# 确保matplotlib关闭图像显示窗口，如果你在脚本中运行这行可能需要
+plt.close()
+shap.initjs()
+
 # 保存为HTML文件
 # shap.save_html("force_plot.html", shap.force_plot(explainer.expected_value, shap_values[0,:], X_test[0,:], feature_names=features))
 
 # 循环遍历测试集，为每个样本生成并保存force_plot
-# for i in range(len(y_pred)):
-#     if (y_pred[i] == 1):
-#         # 为当前样本生成force_plot并保存到'htmls'文件夹中
-#         plot_filename = os.path.join('defaults_htmls', f"force_plot_{i}.html")
-#         shap.save_html(plot_filename, shap.force_plot(explainer.expected_value, shap_values[i, :], X_test[i, :], feature_names=features))
-#         print(f"Force plot for sample {i} saved as {plot_filename}")
-#
-# for i in range(len(y_pred)):
-#     # 为当前样本生成force_plot并保存到'htmls'文件夹中
-#     plot_filename = os.path.join('htmls', f"force_plot_{i}.html")
-#     shap.save_html(plot_filename,
-#                    shap.force_plot(explainer.expected_value, shap_values[i, :], X_test[i, :], feature_names=features))
-#     print(f"Force plot for sample {i} saved as {plot_filename}")
+for i in range(len(y_pred)):
+    if (y_pred[i] == 1):
+        # 为当前样本生成force_plot并保存到'shap/default_htmls'文件夹中
+        plot_filename = os.path.join('shap/default_htmls', f"force_plot_default_{i}.html")
+        shap.save_html(plot_filename, shap.force_plot(explainer.expected_value, shap_values[i, :], X_test[i, :], feature_names=features))
+        print(f"Force plot for sample {i} saved as {plot_filename}")
+    else:
+        # 为当前样本生成force_plot并保存到'shap/nodefault_htmls'文件夹中
+        plot_filename = os.path.join('shap/nodefault_htmls', f"force_plot_nodefault_{i}.html")
+        shap.save_html(plot_filename, shap.force_plot(explainer.expected_value, shap_values[i, :], X_test[i, :], feature_names=features))
+        print(f"Force plot for sample {i} saved as {plot_filename}")
+    # 为当前样本生成force_plot并保存到'shap/all_htmls'文件夹中
+    plot_filename = os.path.join('shap/all_htmls', f"force_plot_{i}.html")
+    shap.save_html(plot_filename, shap.force_plot(explainer.expected_value, shap_values[i, :], X_test[i, :], feature_names=features))
+    print(f"Force plot for sample {i} saved as {plot_filename}")
